@@ -1,0 +1,60 @@
+name: 部署到 GitHub Pages
+
+# 只在 main 分支有更新时部署；PR 不部署
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write # 部署 Pages 必需
+  id-token: write # 用 OIDC 换取部署凭证，无需配置任何 secret
+
+# Pages 部署必须串行，不能并发；也不要取消正在进行的部署
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: 构建静态站点
+    runs-on: ubuntu-latest
+    steps:
+      - name: 拉取代码
+        uses: actions/checkout@v4
+
+      - name: 准备 Node 环境
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: 安装依赖
+        run: npm ci
+
+      - name: 运行测试
+        run: npm test # 测试失败就不会走到部署
+
+      - name: 构建
+        run: npm run build
+
+      - name: 打包为 Pages 制品
+        uses: actions/configure-pages@v5
+
+      - name: 上传制品
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist/
+
+  deploy:
+    name: 发布
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: 部署到 GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
