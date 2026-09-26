@@ -14,7 +14,7 @@ const ITEMS = [
   { name: 'USB-C 扩展坞', price: 189, qty: 1 },
 ];
 
-const PERCENT_OFF = 10;
+const PERCENT_OFF = 20;
 
 const lines = summarize(ITEMS, { percentOff: PERCENT_OFF });
 const table = renderOrderHtml(lines, { percentOff: PERCENT_OFF, title: '示例订单' });
